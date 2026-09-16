@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+**/bin/
+**/obj/
+TestResults/
+.test-results/
+.telemetry-data/

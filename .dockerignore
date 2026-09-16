@@ -1,0 +1,12 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+**/bin
+**/obj
+TestResults
+.test-results
+.telemetry-data
+.idea
+.vscode

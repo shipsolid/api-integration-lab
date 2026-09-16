@@ -50,6 +50,29 @@ The API exports OTLP over gRPC to a standalone Collector. The Collector applies 
 adds `deployment.environment.name=local`, batches all three signals, and forwards them to the pinned
 LGTM backend.
 
+## Documentation
+
+Start with the [documentation map](docs/README.md), which provides separate reading paths for
+learning, contributing, operating, demonstrating, and reviewing the lab. Direct entry points:
+
+- [Learning guide](docs/learning-guide.md) — guided source tour and exercises;
+- [Architecture](ARCHITECTURE.md) — components, critical flows, trust boundaries, and failures;
+- [API reference](docs/api/api-reference.md) — routes, inputs, authentication, and errors;
+- [Local runbook](docs/operations/runbook.md) — health, diagnosis, recovery, and maintenance.
+
+## Ownership boundary
+
+| Dimension | Detail |
+| --- | --- |
+| Repository owner | Amit Singh |
+| Operating model | Personal localhost learning and portfolio lab |
+| On-call / support SLA | None |
+| External ownership | GitHub, Microsoft, JSONPlaceholder, and Postman Echo own their APIs and availability |
+| Repository ownership | Request validation, credential placement, normalization, error mapping, resilience, and local telemetry |
+
+The lab does not own provider identities, provider data, external availability, or non-local
+production infrastructure.
+
 ## Authentication matrix
 
 | Integration | Identity and protocol | Endpoint | What it proves |
@@ -89,11 +112,14 @@ Run live checks from a shell that exports the same optional values as `.env`:
 scripts/smoke-test.sh
 ```
 
-Stop the stack without deleting recoverable telemetry data:
+Stop the containers while preserving their current writable layers for a later `docker compose start`:
 
 ```bash
-docker compose down
+docker compose stop
 ```
+
+`docker compose down` removes the containers. This Compose model declares no persistent volumes, so
+local telemetry is disposable and must not be treated as recoverable evidence.
 
 ### Corporate TLS interception
 

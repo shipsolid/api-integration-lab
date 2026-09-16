@@ -1,8 +1,10 @@
 # API Integration Lab Design
 
 **Date:** 2026-09-16
+
 **Status:** Approved in conversation
-**Source:** `req.md`
+
+**Source:** Original project brief, retained in Git history at `089832d:req.md`.
 
 ## Purpose
 
@@ -153,11 +155,10 @@ application logs. `/api/microsoft/logout` clears both the local cookie and the p
 
 ### Microsoft Application Client Credentials
 
-`/api/microsoft/users` obtains an application token for
-`https://graph.microsoft.com/.default` and calls `GET /v1.0/users` with a bounded `$top` and a
-fixed `$select`. The Entra app registration must have the application permission `User.Read.All`
-with admin consent. This flow represents the workload itself; it never depends on the signed-in
-user and never calls `/me`.
+`/api/microsoft/users` obtains an application token for `https://graph.microsoft.com/.default` and
+calls `GET /v1.0/users` with a bounded `$top` and a fixed `$select`. The Entra app registration must
+have the application permission `User.Read.All` with admin consent. This flow represents the
+workload itself; it never depends on the signed-in user and never calls `/me`.
 
 ### HMAC Webhook
 
@@ -166,8 +167,8 @@ user and never calls `/me`.
 - `X-Webhook-Timestamp`: Unix time in seconds.
 - `X-Webhook-Signature-256`: `sha256=` followed by the lowercase hex HMAC.
 
-The signed bytes are `timestamp + "." + raw request body`. The API rejects timestamps more than
-five minutes from the injected clock, computes HMAC-SHA256 over the exact received bytes, and uses a
+The signed bytes are `timestamp + "." + raw request body`. The API rejects timestamps more than five
+minutes from the injected clock, computes HMAC-SHA256 over the exact received bytes, and uses a
 constant-time comparison. A successfully verified digest is atomically cached until its signed
 timestamp expires, so an identical delivery is rejected even inside the freshness window. It parses
 the JSON only after authentication and never logs the body or signature. This prevents body
@@ -176,21 +177,21 @@ for the single-instance local lab; replicas would require a shared delivery-ID s
 
 ## HTTP API
 
-| Method | Route | Behavior |
-|---|---|---|
-| `GET` | `/api/public/posts?limit=10` | Returns normalized public posts; `limit` is 1–100. |
-| `GET` | `/api/basic/profile` | Calls Postman Echo with Basic Auth and returns authentication state. |
-| `GET` | `/api/github/profile` | Returns normalized authenticated-user data. |
-| `GET` | `/api/github/repos?perPage=30&maxPages=3` | Returns normalized repositories and pagination metadata. |
-| `GET` | `/api/github/rate-limit` | Returns GitHub core rate-limit data. |
-| `GET` | `/api/microsoft/login` | Starts the delegated browser sign-in flow. |
-| `GET` | `/auth/microsoft/callback` | OIDC middleware callback; not application business logic. |
-| `GET` | `/api/microsoft/me` | Returns the delegated user's normalized Graph profile. |
-| `GET` | `/api/microsoft/users?top=10` | Returns 1–50 users through app-only Graph access. |
-| `GET` | `/api/microsoft/logout` | Clears the local and Entra sessions. |
-| `POST` | `/api/webhooks/events` | Authenticates and acknowledges a signed event. |
-| `GET` | `/api/demo` | Aggregates Public API, GitHub, and delegated Graph concurrently. |
-| `GET` | `/health` | Reports application liveness without requiring external credentials. |
+| Method | Route                                     | Behavior                                                             |
+| ------ | ----------------------------------------- | -------------------------------------------------------------------- |
+| `GET`  | `/api/public/posts?limit=10`              | Returns normalized public posts; `limit` is 1–100.                   |
+| `GET`  | `/api/basic/profile`                      | Calls Postman Echo with Basic Auth and returns authentication state. |
+| `GET`  | `/api/github/profile`                     | Returns normalized authenticated-user data.                          |
+| `GET`  | `/api/github/repos?perPage=30&maxPages=3` | Returns normalized repositories and pagination metadata.             |
+| `GET`  | `/api/github/rate-limit`                  | Returns GitHub core rate-limit data.                                 |
+| `GET`  | `/api/microsoft/login`                    | Starts the delegated browser sign-in flow.                           |
+| `GET`  | `/auth/microsoft/callback`                | OIDC middleware callback; not application business logic.            |
+| `GET`  | `/api/microsoft/me`                       | Returns the delegated user's normalized Graph profile.               |
+| `GET`  | `/api/microsoft/users?top=10`             | Returns 1–50 users through app-only Graph access.                    |
+| `GET`  | `/api/microsoft/logout`                   | Clears the local and Entra sessions.                                 |
+| `POST` | `/api/webhooks/events`                    | Authenticates and acknowledges a signed event.                       |
+| `GET`  | `/api/demo`                               | Aggregates Public API, GitHub, and delegated Graph concurrently.     |
+| `GET`  | `/health`                                 | Reports application liveness without requiring external credentials. |
 
 Swagger descriptions state required configuration, the authentication flow, expected failure modes,
 and the order in which a user should exercise the routes.
@@ -208,18 +209,18 @@ demo:
 - Webhook acknowledgement: accepted event type and receipt time.
 
 `/api/demo` requires a delegated Microsoft session, starts its three provider calls concurrently,
-and returns a stable envelope for each provider containing `status`, `data`, and a safe error summary.
-It returns HTTP 200 if at least one provider succeeds and a gateway problem response if every provider
-fails. A slow or failing provider does not discard successful provider results.
+and returns a stable envelope for each provider containing `status`, `data`, and a safe error
+summary. It returns HTTP 200 if at least one provider succeeds and a gateway problem response if
+every provider fails. A slow or failing provider does not discard successful provider results.
 
 ## Resilience and Error Handling
 
-Every provider uses a named or typed `HttpClient` with a finite timeout. The standard .NET resilience
-pipeline retries only idempotent transient outcomes: timeouts, HTTP 408, HTTP 429, and HTTP 5xx.
-Retries use bounded exponential backoff with jitter and honor `Retry-After`. Authentication failures,
-authorization failures, validation failures, and cancellation requested by the caller are not
-retried. GitHub's rate-limit form of HTTP 403 is recognized from its headers and reported without an
-immediate retry.
+Every provider uses a named or typed `HttpClient` with a finite timeout. The standard .NET
+resilience pipeline retries only idempotent transient outcomes: timeouts, HTTP 408, HTTP 429, and
+HTTP 5xx. Retries use bounded exponential backoff with jitter and honor `Retry-After`.
+Authentication failures, authorization failures, validation failures, and cancellation requested by
+the caller are not retried. GitHub's rate-limit form of HTTP 403 is recognized from its headers and
+reported without an immediate retry.
 
 Provider failures map to typed exceptions and then RFC 7807 responses with safe extensions:
 
@@ -240,28 +241,28 @@ other invalid upstream responses map to HTTP 502.
 
 OpenTelemetry automatically instruments ASP.NET Core requests and outbound `HttpClient` calls.
 Explicit activities cover token acquisition, pagination, response normalization, and aggregate
-fan-out. Structured logs record provider, operation, status code, duration, retry decision, and trace
-correlation while excluding credentials, authorization headers, cookies, signatures, request bodies,
-and tokens.
+fan-out. Structured logs record provider, operation, status code, duration, retry decision, and
+trace correlation while excluding credentials, authorization headers, cookies, signatures, request
+bodies, and tokens.
 
 Custom metric dimensions are enumerated values rather than input-derived strings:
 
-| Metric family | Dimensions and estimated values | Maximum active series |
-|---|---|---:|
-| API client requests | provider (4) × operation (8) × outcome (3) | 96 |
-| API client duration histogram | same dimensions × about 13 bucket/count/sum series | 1,248 |
-| API client errors | provider (4) × operation (8) × error type (6) | 192 |
-| Auth token requests | flow (2) × outcome (3) | 6 |
-| **Total** | 15-second export interval | **about 1,542** |
+| Metric family                 | Dimensions and estimated values                    | Maximum active series |
+| ----------------------------- | -------------------------------------------------- | --------------------: |
+| API client requests           | provider (4) × operation (8) × outcome (3)         |                    96 |
+| API client duration histogram | same dimensions × about 13 bucket/count/sum series |                 1,248 |
+| API client errors             | provider (4) × operation (8) × error type (6)      |                   192 |
+| Auth token requests           | flow (2) × outcome (3)                             |                     6 |
+| **Total**                     | 15-second export interval                          |       **about 1,542** |
 
 The .NET meter instruments are named `api.client.requests`, `api.client.request.duration`,
 `api.client.errors`, and `api.auth.token.requests`. The Prometheus-compatible backend renders the
 counter families with the conventional `_total` suffix.
 
-At full population this is about 103 samples/second. The destination is the local Prometheus backend,
-so paid ingest cost is zero and the cardinality risk is low. Request IDs, user IDs, repository names,
-raw URLs, tenant IDs, and timestamps are prohibited as metric labels; request-specific correlation
-belongs in logs and traces.
+At full population this is about 103 samples/second. The destination is the local Prometheus
+backend, so paid ingest cost is zero and the cardinality risk is low. Request IDs, user IDs,
+repository names, raw URLs, tenant IDs, and timestamps are prohibited as metric labels;
+request-specific correlation belongs in logs and traces.
 
 The application exports OTLP to the standalone collector. The collector applies memory limiting,
 batching, and resource enrichment, then exports OTLP to Grafana LGTM. Grafana is available locally
@@ -304,8 +305,8 @@ the externally visible contract; focused inline comments explain protocol and se
 
 ## Testing and Validation
 
-Implementation follows test-driven development. Automated tests do not contact live providers and
-do not require secrets.
+Implementation follows test-driven development. Automated tests do not contact live providers and do
+not require secrets.
 
 ### Unit tests
 
@@ -352,11 +353,12 @@ do not require secrets.
 6. The HMAC endpoint rejects missing, invalid, or replayed signatures and accepts a correctly signed
    event.
 7. The aggregate endpoint normalizes provider responses and preserves partial successes.
-8. Transient failures are retried within the configured budget; auth and validation failures are not.
+8. Transient failures are retried within the configured budget; auth and validation failures are
+   not.
 9. No secret, token, authorization header, cookie, signature, or webhook body appears in logs or API
    error responses.
 10. Grafana displays correlated logs, metrics, and traces from a smoke-test request.
-11. All automated tests, Release build, Docker build, Compose render, collector validation, and smoke
-    checks pass.
+11. All automated tests, Release build, Docker build, Compose render, collector validation, and
+    smoke checks pass.
 12. Protocol and security decisions are explained inline at their implementation points, so source
     readers do not need external documentation to understand the flows.

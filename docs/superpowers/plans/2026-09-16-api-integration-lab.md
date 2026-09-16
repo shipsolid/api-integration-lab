@@ -1,12 +1,21 @@
 # API Integration Lab Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development
+> (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use
+> checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a locally reproducible .NET 8 API integration showcase implementing every authentication, resilience, security, aggregation, and observability requirement in `req.md`.
+**Goal:** Build a locally reproducible .NET 8 API integration showcase implementing every
+authentication, resilience, security, aggregation, and observability requirement in the approved
+API Integration Lab design.
 
-**Architecture:** A single ASP.NET Core API is organized into feature folders containing controllers, normalized models, and typed clients. Shared error, HTTP resilience, configuration, and telemetry components provide bounded cross-cutting behavior; Docker Compose sends OTLP through a standalone collector to a local Grafana LGTM backend.
+**Architecture:** A single ASP.NET Core API is organized into feature folders containing
+controllers, normalized models, and typed clients. Shared error, HTTP resilience, configuration, and
+telemetry components provide bounded cross-cutting behavior; Docker Compose sends OTLP through a
+standalone collector to a local Grafana LGTM backend.
 
-**Tech Stack:** .NET 8, ASP.NET Core controllers, Microsoft.Identity.Web 4.14.2, Microsoft.Extensions.Http.Resilience 10.10.0, OpenTelemetry .NET 1.18.0, Swashbuckle.AspNetCore 10.2.3, xUnit, Docker Compose, OpenTelemetry Collector, Grafana LGTM.
+**Tech Stack:** .NET 8, ASP.NET Core controllers, Microsoft.Identity.Web 4.14.2,
+Microsoft.Extensions.Http.Resilience 10.10.0, OpenTelemetry .NET 1.18.0, Swashbuckle.AspNetCore
+10.2.3, xUnit, Docker Compose, OpenTelemetry Collector, Grafana LGTM.
 
 **Spec:** `docs/superpowers/specs/2026-09-16-api-integration-lab-design.md`
 
@@ -15,34 +24,39 @@
 - Target `net8.0`; keep the repository runnable with the installed .NET 8 SDK.
 - All external calls use typed `HttpClient` instances with finite timeouts and cancellation.
 - GitHub and Graph collection requests are explicitly bounded.
-- Secrets come from environment-backed configuration and never appear in source, responses, logs, metrics, or traces.
+- Secrets come from environment-backed configuration and never appear in source, responses, logs,
+  metrics, or traces.
 - Missing optional credentials must not prevent application startup.
-- Metric labels are restricted to the enumerated provider, operation, outcome, error type, and auth-flow values in the spec.
-- Inline comments explain authentication, retry, pagination, redaction, and signature decisions at their implementation points; routine syntax is not narrated.
+- Metric labels are restricted to the enumerated provider, operation, outcome, error type, and
+  auth-flow values in the spec.
+- Inline comments explain authentication, retry, pagination, redaction, and signature decisions at
+  their implementation points; routine syntax is not narrated.
 - Automated tests never call live external APIs and never require credentials.
-- Do not commit during execution unless Amit explicitly requests a commit. Each task ends with a diff-review checkpoint instead.
+- Do not commit during execution unless Amit explicitly requests a commit. Each task ends with a
+  diff-review checkpoint instead.
 
 ## File Map
 
-| Area | Responsibility |
-|---|---|
-| `ApiIntegrationLab.sln` | Solution containing API and both test projects. |
-| `src/ApiIntegrationLab.Api/Program.cs` | Composition root and middleware ordering only. |
-| `src/ApiIntegrationLab.Api/Common/` | Typed failures, exception mapping, resilience, shared results, telemetry, and testable time abstraction. |
-| `src/ApiIntegrationLab.Api/Integrations/<Provider>/` | Provider-specific options, DTOs, normalized models, client, and controller. |
-| `src/ApiIntegrationLab.Api/Authentication/Microsoft/` | Delegated/app token acquisition adapter and sign-in/sign-out controller. |
-| `src/ApiIntegrationLab.Api/Authentication/Webhooks/` | HMAC verification and webhook controller. |
-| `tests/ApiIntegrationLab.UnitTests/` | Pure and mocked-handler tests for provider/auth behavior. |
-| `tests/ApiIntegrationLab.IntegrationTests/` | Full host routing, middleware, Swagger, health, and problem-response tests. |
-| `Dockerfile`, `docker-compose.yml`, `otel-collector.yaml` | Reproducible local application and observability stack. |
-| `scripts/smoke-test.sh` | Repeatable live local verification without exposing secrets. |
-| `README.md` | Manager-facing demo, setup, auth matrix, security, and telemetry evidence. |
+| Area                                                      | Responsibility                                                                                           |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `ApiIntegrationLab.sln`                                   | Solution containing API and both test projects.                                                          |
+| `src/ApiIntegrationLab.Api/Program.cs`                    | Composition root and middleware ordering only.                                                           |
+| `src/ApiIntegrationLab.Api/Common/`                       | Typed failures, exception mapping, resilience, shared results, telemetry, and testable time abstraction. |
+| `src/ApiIntegrationLab.Api/Integrations/<Provider>/`      | Provider-specific options, DTOs, normalized models, client, and controller.                              |
+| `src/ApiIntegrationLab.Api/Authentication/Microsoft/`     | Delegated/app token acquisition adapter and sign-in/sign-out controller.                                 |
+| `src/ApiIntegrationLab.Api/Authentication/Webhooks/`      | HMAC verification and webhook controller.                                                                |
+| `tests/ApiIntegrationLab.UnitTests/`                      | Pure and mocked-handler tests for provider/auth behavior.                                                |
+| `tests/ApiIntegrationLab.IntegrationTests/`               | Full host routing, middleware, Swagger, health, and problem-response tests.                              |
+| `Dockerfile`, `docker-compose.yml`, `otel-collector.yaml` | Reproducible local application and observability stack.                                                  |
+| `scripts/smoke-test.sh`                                   | Repeatable live local verification without exposing secrets.                                             |
+| `README.md`                                               | Manager-facing demo, setup, auth matrix, security, and telemetry evidence.                               |
 
 ---
 
 ### Task 1: Scaffold the solution and executable test hosts
 
 **Files:**
+
 - Create: `ApiIntegrationLab.sln`
 - Create: `global.json`
 - Create: `src/ApiIntegrationLab.Api/ApiIntegrationLab.Api.csproj`
@@ -56,7 +70,9 @@
 - Modify: `.gitignore`
 
 **Interfaces:**
-- Produces: an executable `Program` visible to `WebApplicationFactory<Program>` through `public partial class Program`.
+
+- Produces: an executable `Program` visible to `WebApplicationFactory<Program>` through
+  `public partial class Program`.
 - Produces: `GET /health` returning HTTP 200 with `{ "status": "Healthy" }`.
 
 - [ ] **Step 1: Generate solution and projects**
@@ -76,7 +92,8 @@ dotnet add tests/ApiIntegrationLab.IntegrationTests/ApiIntegrationLab.Integratio
 dotnet add tests/ApiIntegrationLab.IntegrationTests/ApiIntegrationLab.IntegrationTests.csproj package Microsoft.AspNetCore.Mvc.Testing --version 8.0.31
 ```
 
-Delete the generated WeatherForecast controller/model and replace the generated `Program.cs` with the minimal API host required below.
+Delete the generated WeatherForecast controller/model and replace the generated `Program.cs` with
+the minimal API host required below.
 
 - [ ] **Step 2: Write the failing host test**
 
@@ -101,7 +118,8 @@ public sealed class HealthEndpointTests : IClassFixture<ApplicationFactory>
 
 - [ ] **Step 3: Run the focused test and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.IntegrationTests/ApiIntegrationLab.IntegrationTests.csproj --filter Health_returns_healthy_without_external_credentials`
+Run:
+`dotnet test tests/ApiIntegrationLab.IntegrationTests/ApiIntegrationLab.IntegrationTests.csproj --filter Health_returns_healthy_without_external_credentials`
 
 Expected: FAIL because `/health` and `ApplicationFactory` are not implemented.
 
@@ -175,10 +193,12 @@ internal sealed class StubHttpMessageHandler : HttpMessageHandler
 }
 ```
 
-Provider test files may add narrowly scoped factory methods beside their tests, but must build on this
-handler rather than introducing a mocking framework.
+Provider test files may add narrowly scoped factory methods beside their tests, but must build on
+this handler rather than introducing a mocking framework.
 
-Create `global.json` with SDK `8.0.131` and `rollForward` set to `latestFeature`. Extend `.gitignore` with `.env`, `bin/`, `obj/`, TestResults, IDE state, and local telemetry data directories.
+Create `global.json` with SDK `8.0.131` and `rollForward` set to `latestFeature`. Extend
+`.gitignore` with `.env`, `bin/`, `obj/`, TestResults, IDE state, and local telemetry data
+directories.
 
 - [ ] **Step 5: Verify the scaffold**
 
@@ -190,11 +210,12 @@ Expected: PASS, with the health endpoint succeeding when no provider credentials
 
 Run: `git diff --check && git status --short`
 
-Confirm only scaffold files, `.gitignore`, the approved spec/plan, and the existing untracked `req.md` are present. Do not commit.
+Confirm only scaffold files, `.gitignore`, and the approved spec/plan are present. Do not commit.
 
 ### Task 2: Add shared configuration, failures, HTTP resilience, and telemetry contracts
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Common/Configuration/OptionsValidator.cs`
 - Create: `src/ApiIntegrationLab.Api/Common/Errors/IntegrationErrorCategory.cs`
 - Create: `src/ApiIntegrationLab.Api/Common/Errors/IntegrationException.cs`
@@ -211,10 +232,15 @@ Confirm only scaffold files, `.gitignore`, the approved spec/plan, and the exist
 - Modify: `src/ApiIntegrationLab.Api/Program.cs`
 
 **Interfaces:**
-- Produces: `OptionsValidator.Require(string provider, params (string Key, string? Value)[] values)`.
-- Produces: `IntegrationException` carrying provider, bounded category, suggested HTTP status, and optional retry delay.
-- Produces: `IntegrationResult<T>(string Status, T? Data, IntegrationError? Error)` with `Success` and `Failure` factories.
-- Produces: `ApiTelemetry.MeasureRequest(string provider, string operation)` returning a disposable outcome recorder.
+
+- Produces:
+  `OptionsValidator.Require(string provider, params (string Key, string? Value)[] values)`.
+- Produces: `IntegrationException` carrying provider, bounded category, suggested HTTP status, and
+  optional retry delay.
+- Produces: `IntegrationResult<T>(string Status, T? Data, IntegrationError? Error)` with `Success`
+  and `Failure` factories.
+- Produces: `ApiTelemetry.MeasureRequest(string provider, string operation)` returning a disposable
+  outcome recorder.
 - Produces: `ISystemClock.UtcNow` for deterministic replay tests.
 
 - [ ] **Step 1: Add runtime packages**
@@ -257,7 +283,8 @@ keys are emitted: `provider`, `operation`, `outcome`, and `error.type`.
 
 - [ ] **Step 3: Run focused tests and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter "OptionsValidatorTests|IntegrationExceptionTests|ApiTelemetryTests"`
+Run:
+`dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter "OptionsValidatorTests|IntegrationExceptionTests|ApiTelemetryTests"`
 
 Expected: FAIL because the shared contracts do not exist.
 
@@ -329,12 +356,13 @@ public interface IIntegrationRequestMeasurement : IDisposable
 ```
 
 `IntegrationExceptionHandler` must write RFC 7807 JSON containing `provider`, lowercase `category`,
-`traceId`, and `retryAfterSeconds` only when present. The detail must be an owned safe message, never
-the upstream response body.
+`traceId`, and `retryAfterSeconds` only when present. The detail must be an owned safe message,
+never the upstream response body.
 
-`AddIntegrationHttpClient<TClient,TImplementation>` configures a base URI, a 15-second total timeout,
-two retry attempts with exponential backoff/jitter, and retry predicates limited to timeout, 408,
-429, and 5xx outcomes. Add an inline comment explaining why auth and validation failures are excluded.
+`AddIntegrationHttpClient<TClient,TImplementation>` configures a base URI, a 15-second total
+timeout, two retry attempts with exponential backoff/jitter, and retry predicates limited to
+timeout, 408, 429, and 5xx outcomes. Add an inline comment explaining why auth and validation
+failures are excluded.
 
 `ApiTelemetry` owns `ActivitySource("ApiIntegrationLab")` and `Meter("ApiIntegrationLab")` with
 instruments `api.client.requests`, `api.client.request.duration`, `api.client.errors`, and
@@ -357,11 +385,13 @@ Expected: PASS; telemetry tests prove the bounded label contract and no test val
 
 Run: `git diff --check && git status --short`
 
-Inspect exception details and telemetry tags for accidental secret or unbounded values. Do not commit.
+Inspect exception details and telemetry tags for accidental secret or unbounded values. Do not
+commit.
 
 ### Task 3: Implement the unauthenticated public API integration
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Integrations/PublicApi/PublicApiOptions.cs`
 - Create: `src/ApiIntegrationLab.Api/Integrations/PublicApi/PublicPostDto.cs`
 - Create: `src/ApiIntegrationLab.Api/Integrations/PublicApi/PublicPost.cs`
@@ -375,7 +405,9 @@ Inspect exception details and telemetry tags for accidental secret or unbounded 
 - Modify: `src/ApiIntegrationLab.Api/appsettings.json`
 
 **Interfaces:**
-- Produces: `Task<IReadOnlyList<PublicPost>> IPublicApiClient.GetPostsAsync(int limit, CancellationToken cancellationToken)`.
+
+- Produces:
+  `Task<IReadOnlyList<PublicPost>> IPublicApiClient.GetPostsAsync(int limit, CancellationToken cancellationToken)`.
 - Produces: `GET /api/public/posts?limit=10`, accepting limits 1–100.
 - Test support: `PublicApiClientTestFactory.Create(StubHttpMessageHandler handler)` constructs the
   production client with in-memory options and `ApiTelemetry`.
@@ -412,7 +444,8 @@ public async Task GetPosts_rejects_unbounded_limits(int limit)
 
 - [ ] **Step 2: Run focused tests and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter PublicApiClientTests`
+Run:
+`dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter PublicApiClientTests`
 
 Expected: FAIL because the public client and models do not exist.
 
@@ -436,9 +469,9 @@ through `ApiTelemetry` without tagging post IDs or titles.
 - [ ] **Step 4: Write and implement the endpoint test**
 
 The integration test replaces `IPublicApiClient` with a fake, calls `/api/public/posts?limit=1`, and
-asserts HTTP 200 plus the normalized schema. Add a second test asserting HTTP 400 Problem Details for
-`limit=0`. Implement an `[ApiController]` route with XML summary and remarks explaining that this is
-the no-auth baseline.
+asserts HTTP 200 plus the normalized schema. Add a second test asserting HTTP 400 Problem Details
+for `limit=0`. Implement an `[ApiController]` route with XML summary and remarks explaining that
+this is the no-auth baseline.
 
 - [ ] **Step 5: Verify the public integration**
 
@@ -450,11 +483,13 @@ Expected: PASS.
 
 Run: `git diff --check && git status --short`
 
-Confirm the endpoint has no auth header, uses the shared resilience pipeline, and has no high-cardinality telemetry. Do not commit.
+Confirm the endpoint has no auth header, uses the shared resilience pipeline, and has no
+high-cardinality telemetry. Do not commit.
 
 ### Task 4: Implement outbound Basic Authentication
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Integrations/BasicAuth/BasicAuthOptions.cs`
 - Create: `src/ApiIntegrationLab.Api/Integrations/BasicAuth/BasicAuthProfile.cs`
 - Create: `src/ApiIntegrationLab.Api/Integrations/BasicAuth/IBasicAuthClient.cs`
@@ -468,7 +503,9 @@ Confirm the endpoint has no auth header, uses the shared resilience pipeline, an
 - Modify: `src/ApiIntegrationLab.Api/appsettings.json`
 
 **Interfaces:**
-- Produces: `Task<BasicAuthProfile> IBasicAuthClient.GetProfileAsync(CancellationToken cancellationToken)`.
+
+- Produces:
+  `Task<BasicAuthProfile> IBasicAuthClient.GetProfileAsync(CancellationToken cancellationToken)`.
 - Produces: `GET /api/basic/profile`.
 - Test support: create the `BasicAuthenticationHandler` directly with `IOptions<BasicAuthOptions>`
   and the shared stub handler; `BasicAuthClientTests` uses the same direct-construction pattern.
@@ -506,7 +543,8 @@ public async Task Handler_rejects_missing_password_before_network_call()
 
 - [ ] **Step 2: Run focused tests and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter "BasicAuthenticationHandlerTests|BasicAuthClientTests"`
+Run:
+`dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter "BasicAuthenticationHandlerTests|BasicAuthClientTests"`
 
 Expected: FAIL because the Basic Auth feature does not exist.
 
@@ -551,6 +589,7 @@ response model may contain credentials or authorization headers. Do not commit.
 ### Task 5: Implement GitHub bearer authentication, pagination, and rate limits
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Integrations/GitHub/GitHubOptions.cs`
 - Create: `src/ApiIntegrationLab.Api/Integrations/GitHub/GitHubAuthenticationHandler.cs`
 - Create: `src/ApiIntegrationLab.Api/Integrations/GitHub/GitHubDtos.cs`
@@ -568,8 +607,10 @@ response model may contain credentials or authorization headers. Do not commit.
 - Modify: `src/ApiIntegrationLab.Api/appsettings.json`
 
 **Interfaces:**
+
 - Produces: `Task<GitHubProfile> GetProfileAsync(CancellationToken cancellationToken)`.
-- Produces: `Task<GitHubRepositoryPage> GetRepositoriesAsync(int perPage, int maxPages, CancellationToken cancellationToken)`.
+- Produces:
+  `Task<GitHubRepositoryPage> GetRepositoriesAsync(int perPage, int maxPages, CancellationToken cancellationToken)`.
 - Produces: `Task<GitHubRateLimit> GetRateLimitAsync(CancellationToken cancellationToken)`.
 - Produces: `/api/github/profile`, `/api/github/repos`, and `/api/github/rate-limit`.
 - Test support: `GitHubTestFactory.CreateAuthHandler(string? token, HttpMessageHandler inner)`,
@@ -608,12 +649,14 @@ public async Task Repositories_follow_next_link_until_max_pages()
 }
 ```
 
-Add tests proving no `Link` header stops immediately, `maxPages=1` ignores a next link, invalid bounds
-(`perPage` outside 1–100 or `maxPages` outside 1–10) fail before HTTP, and cancellation stops the loop.
+Add tests proving no `Link` header stops immediately, `maxPages=1` ignores a next link, invalid
+bounds (`perPage` outside 1–100 or `maxPages` outside 1–10) fail before HTTP, and cancellation stops
+the loop.
 
 - [ ] **Step 2: Run focused tests and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter "GitHubAuthenticationHandlerTests|GitHubPaginationTests|GitHubRateLimitTests"`
+Run:
+`dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter "GitHubAuthenticationHandlerTests|GitHubPaginationTests|GitHubRateLimitTests"`
 
 Expected: FAIL because the GitHub feature does not exist.
 
@@ -669,8 +712,8 @@ shared typed errors without copying the upstream body.
 
 - [ ] **Step 4: Add controller and integration tests**
 
-Test all three routes, query bounds, RFC 7807 auth failure, and `Retry-After` on throttling. XML remarks
-must show the no-token 401 → configured-token 200 demonstration and explain pagination caps.
+Test all three routes, query bounds, RFC 7807 auth failure, and `Retry-After` on throttling. XML
+remarks must show the no-token 401 → configured-token 200 demonstration and explain pagination caps.
 
 - [ ] **Step 5: Verify the GitHub integration**
 
@@ -680,13 +723,16 @@ Expected: PASS.
 
 - [ ] **Step 6: Review checkpoint**
 
-Run: `git diff --check && rg -n "Token|Authorization|Login|Repository" src/ApiIntegrationLab.Api/Common/Telemetry src/ApiIntegrationLab.Api/Integrations/GitHub`
+Run:
+`git diff --check && rg -n "Token|Authorization|Login|Repository" src/ApiIntegrationLab.Api/Common/Telemetry src/ApiIntegrationLab.Api/Integrations/GitHub`
 
-Confirm token values never enter logs/traces and repository/login values are not metric labels. Do not commit.
+Confirm token values never enter logs/traces and repository/login values are not metric labels. Do
+not commit.
 
 ### Task 6: Implement both Microsoft Graph OAuth flows
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Authentication/Microsoft/GraphOptions.cs`
 - Create: `src/ApiIntegrationLab.Api/Authentication/Microsoft/IGraphTokenProvider.cs`
 - Create: `src/ApiIntegrationLab.Api/Authentication/Microsoft/MicrosoftGraphTokenProvider.cs`
@@ -705,8 +751,11 @@ Confirm token values never enter logs/traces and repository/login values are not
 - Modify: `src/ApiIntegrationLab.Api/appsettings.json`
 
 **Interfaces:**
-- Produces: `IGraphTokenProvider.GetDelegatedTokenAsync(ClaimsPrincipal user, CancellationToken)` and `GetApplicationTokenAsync(CancellationToken)`.
-- Produces: `IMicrosoftGraphClient.GetMeAsync(ClaimsPrincipal user, CancellationToken)` and `GetUsersAsync(int top, CancellationToken)`.
+
+- Produces: `IGraphTokenProvider.GetDelegatedTokenAsync(ClaimsPrincipal user, CancellationToken)`
+  and `GetApplicationTokenAsync(CancellationToken)`.
+- Produces: `IMicrosoftGraphClient.GetMeAsync(ClaimsPrincipal user, CancellationToken)` and
+  `GetUsersAsync(int top, CancellationToken)`.
 - Produces: login, callback, logout, delegated `/me`, and application `/users` routes from the spec.
 - Test support: `RecordingGraphTokenProvider(string delegatedToken, string appToken)` records calls;
   `GraphTestFactory.CreateClient(IGraphTokenProvider, StubHttpMessageHandler)` constructs the real
@@ -755,12 +804,14 @@ public async Task GetUsers_uses_application_default_scope_token()
 }
 ```
 
-Add tests for `top` bounds 1–50, missing AzureAd keys, token-acquisition failure redaction, malformed
-Graph payload, and mapping of `@odata.nextLink` absence without adding Graph pagination beyond `$top`.
+Add tests for `top` bounds 1–50, missing AzureAd keys, token-acquisition failure redaction,
+malformed Graph payload, and mapping of `@odata.nextLink` absence without adding Graph pagination
+beyond `$top`.
 
 - [ ] **Step 3: Run focused tests and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter MicrosoftGraphClientTests`
+Run:
+`dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter MicrosoftGraphClientTests`
 
 Expected: FAIL because Graph auth and clients do not exist.
 
@@ -826,10 +877,10 @@ fields, maps provider DTOs to `GraphUser`, and records no ID/mail/user-principal
 
 - [ ] **Step 6: Add endpoint tests and inline Swagger guidance**
 
-Integration tests assert login challenges OIDC, `/me` requires a user session, `/users` works through
-a fake app-token client without a cookie, invalid `top` returns 400, and missing configuration returns
-503 without crashing host startup. Swagger remarks list redirect URI, delegated `User.Read`, and
-application `User.Read.All` admin-consent requirements.
+Integration tests assert login challenges OIDC, `/me` requires a user session, `/users` works
+through a fake app-token client without a cookie, invalid `top` returns 400, and missing
+configuration returns 503 without crashing host startup. Swagger remarks list redirect URI,
+delegated `User.Read`, and application `User.Read.All` admin-consent requirements.
 
 - [ ] **Step 7: Verify both Microsoft flows**
 
@@ -839,7 +890,8 @@ Expected: PASS.
 
 - [ ] **Step 8: Review checkpoint**
 
-Run: `git diff --check && rg -n "AccessToken|ClientSecret|Authorization" src/ApiIntegrationLab.Api/Authentication/Microsoft src/ApiIntegrationLab.Api/Integrations/MicrosoftGraph`
+Run:
+`git diff --check && rg -n "AccessToken|ClientSecret|Authorization" src/ApiIntegrationLab.Api/Authentication/Microsoft src/ApiIntegrationLab.Api/Integrations/MicrosoftGraph`
 
 Every occurrence must be configuration access, an outbound header assignment, or an explanatory
 comment; none may be a log argument or response property. Do not commit.
@@ -847,6 +899,7 @@ comment; none may be a log argument or response property. Do not commit.
 ### Task 7: Implement replay-resistant inbound HMAC authentication
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Authentication/Webhooks/WebhookOptions.cs`
 - Create: `src/ApiIntegrationLab.Api/Authentication/Webhooks/WebhookVerificationResult.cs`
 - Create: `src/ApiIntegrationLab.Api/Authentication/Webhooks/IWebhookSignatureVerifier.cs`
@@ -860,7 +913,9 @@ comment; none may be a log argument or response property. Do not commit.
 - Modify: `src/ApiIntegrationLab.Api/appsettings.json`
 
 **Interfaces:**
-- Produces: `WebhookVerificationResult Verify(byte[] body, string? timestamp, string? signature, DateTimeOffset now)`.
+
+- Produces:
+  `WebhookVerificationResult Verify(byte[] body, string? timestamp, string? signature, DateTimeOffset now)`.
 - Produces: `POST /api/webhooks/events` using `X-Webhook-Timestamp` and `X-Webhook-Signature-256`.
 - Test support: `WebhookTestFactory.Create(string secret)` constructs the verifier and
   `Sign(string secret, string timestamp, byte[] body)` returns the exact `sha256=<hex>` header.
@@ -900,11 +955,13 @@ public void Verify_rejects_invalid_signatures(string signature)
 ```
 
 Add tests for missing headers, malformed timestamp, timestamps older/newer than five minutes, a
-single-byte body change, uppercase/non-hex signature, missing secret, and fixed-time comparison path.
+single-byte body change, uppercase/non-hex signature, missing secret, and fixed-time comparison
+path.
 
 - [ ] **Step 2: Run focused tests and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter WebhookSignatureVerifierTests`
+Run:
+`dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter WebhookSignatureVerifierTests`
 
 Expected: FAIL because webhook verification does not exist.
 
@@ -949,9 +1006,9 @@ temporary secret byte arrays when practical and never log body/signature values.
 - [ ] **Step 4: Implement endpoint and integration tests**
 
 Read the request body into a bounded buffer with a 64 KiB limit, verify before JSON deserialization,
-then require a nonempty `eventType`. Return an acknowledgement containing only event type and receipt
-time. Tests send correctly and incorrectly signed requests and assert 202, 401, 400, and 413 behavior;
-capture logs and assert body/signature text is absent.
+then require a nonempty `eventType`. Return an acknowledgement containing only event type and
+receipt time. Tests send correctly and incorrectly signed requests and assert 202, 401, 400, and 413
+behavior; capture logs and assert body/signature text is absent.
 
 - [ ] **Step 5: Verify webhook authentication**
 
@@ -961,13 +1018,15 @@ Expected: PASS.
 
 - [ ] **Step 6: Review checkpoint**
 
-Run: `git diff --check && rg -n "Request\.Body|Signature|Webhook" src/ApiIntegrationLab.Api/Authentication/Webhooks`
+Run:
+`git diff --check && rg -n "Request\.Body|Signature|Webhook" src/ApiIntegrationLab.Api/Authentication/Webhooks`
 
 Confirm parsing occurs only after verification and no sensitive value is logged. Do not commit.
 
 ### Task 8: Implement concurrent normalized aggregation
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Integrations/Demo/DemoResponse.cs`
 - Create: `src/ApiIntegrationLab.Api/Integrations/Demo/IDemoAggregator.cs`
 - Create: `src/ApiIntegrationLab.Api/Integrations/Demo/DemoAggregator.cs`
@@ -980,8 +1039,10 @@ Confirm parsing occurs only after verification and no sensitive value is logged.
 - Modify: `src/ApiIntegrationLab.Api/Program.cs`
 
 **Interfaces:**
+
 - Consumes: `IPublicApiClient`, `IGitHubClient`, and `IMicrosoftGraphClient`.
-- Produces: `Task<DemoResponse> GetAsync(ClaimsPrincipal user, CancellationToken cancellationToken)`.
+- Produces:
+  `Task<DemoResponse> GetAsync(ClaimsPrincipal user, CancellationToken cancellationToken)`.
 - Produces: authorized `GET /api/demo`.
 - Test support: `DemoTestFactory.Create(...)` supplies success/failure fakes,
   `CreateWithProbe(ConcurrentStartProbe)` blocks each fake until all three start, and
@@ -1036,7 +1097,8 @@ provider-specific DTO escaping into the response.
 
 - [ ] **Step 2: Run focused tests and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter DemoAggregatorTests`
+Run:
+`dotnet test tests/ApiIntegrationLab.UnitTests/ApiIntegrationLab.UnitTests.csproj --filter DemoAggregatorTests`
 
 Expected: FAIL because aggregation does not exist.
 
@@ -1055,10 +1117,11 @@ public sealed record DemoResponse(
 }
 ```
 
-Start all three tasks before awaiting them. Convert only `IntegrationException` into a failed provider
-envelope; let cancellation propagate and map unexpected bugs through the global handler. Create a
-parent activity and child events with provider names only. Add an inline comment explaining why a
-provider failure is data for this aggregate rather than an exception that discards other results.
+Start all three tasks before awaiting them. Convert only `IntegrationException` into a failed
+provider envelope; let cancellation propagate and map unexpected bugs through the global handler.
+Create a parent activity and child events with provider names only. Add an inline comment explaining
+why a provider failure is data for this aggregate rather than an exception that discards other
+results.
 
 - [ ] **Step 4: Implement endpoint semantics**
 
@@ -1077,11 +1140,13 @@ Expected: PASS.
 
 Run: `git diff --check && git status --short`
 
-Confirm concurrent calls share caller cancellation and response errors reveal no upstream bodies. Do not commit.
+Confirm concurrent calls share caller cancellation and response errors reveal no upstream bodies. Do
+not commit.
 
 ### Task 9: Complete Swagger, route documentation, health, and host-level behavior
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Common/OpenApi/SwaggerConfiguration.cs`
 - Create: `tests/ApiIntegrationLab.IntegrationTests/SwaggerContractTests.cs`
 - Create: `tests/ApiIntegrationLab.IntegrationTests/ProblemDetailsTests.cs`
@@ -1091,6 +1156,7 @@ Confirm concurrent calls share caller cancellation and response errors reveal no
 - Modify: every feature controller XML summary/remarks block
 
 **Interfaces:**
+
 - Produces: `/swagger`, `/swagger/v1/swagger.json`, and the complete endpoint catalogue.
 - Produces: consistent `application/problem+json` responses.
 - Preserves: `/health` success without provider configuration.
@@ -1126,7 +1192,8 @@ documents/errors, and optional credentials do not affect `/health` or Swagger.
 
 - [ ] **Step 2: Run host-contract tests and verify failure**
 
-Run: `dotnet test tests/ApiIntegrationLab.IntegrationTests/ApiIntegrationLab.IntegrationTests.csproj --filter "SwaggerContractTests|ProblemDetailsTests|OptionalConfigurationTests"`
+Run:
+`dotnet test tests/ApiIntegrationLab.IntegrationTests/ApiIntegrationLab.IntegrationTests.csproj --filter "SwaggerContractTests|ProblemDetailsTests|OptionalConfigurationTests"`
 
 Expected: FAIL until Swagger/XML documentation and all host behavior are wired.
 
@@ -1141,8 +1208,8 @@ Add to the API project:
 </PropertyGroup>
 ```
 
-Register `AddEndpointsApiExplorer` and `AddSwaggerGen`, include the XML file, describe cookie/OIDC and
-bearer demonstrations without asking Swagger to store provider tokens, and expose Swagger at
+Register `AddEndpointsApiExplorer` and `AddSwaggerGen`, include the XML file, describe cookie/OIDC
+and bearer demonstrations without asking Swagger to store provider tokens, and expose Swagger at
 `/swagger`. Add controller remarks with prerequisites, exact flow order, expected failures, and safe
 example responses. Keep explanations at the implementation surface so the source remains sufficient.
 
@@ -1162,11 +1229,13 @@ Expected: PASS.
 
 Run: `git diff --check && rg -n "<summary>|<remarks>" src/ApiIntegrationLab.Api`
 
-Open the generated Swagger JSON and confirm every route explains setup and failure behavior. Do not commit.
+Open the generated Swagger JSON and confirm every route explains setup and failure behavior. Do not
+commit.
 
 ### Task 10: Export safe OpenTelemetry logs, metrics, and traces
 
 **Files:**
+
 - Create: `src/ApiIntegrationLab.Api/Common/Telemetry/OpenTelemetryConfiguration.cs`
 - Create: `tests/ApiIntegrationLab.UnitTests/TestDoubles/TelemetryTestListener.cs`
 - Create: `tests/ApiIntegrationLab.UnitTests/Common/OpenTelemetrySafetyTests.cs`
@@ -1176,11 +1245,12 @@ Open the generated Swagger JSON and confirm every route explains setup and failu
 - Modify: `src/ApiIntegrationLab.Api/appsettings.json`
 
 **Interfaces:**
+
 - Consumes: `ApiTelemetry.ActivitySourceName` and `ApiTelemetry.MeterName`.
 - Produces: OTLP logs, metrics, and traces with service name `api-integration-lab`.
 - Produces: correlated structured log records without secret/high-cardinality telemetry fields.
-- Test support: `TelemetryTestListener.ListenTo(string sourceName)` captures activities and exposes a
-  deterministic `SerializedActivities` string built from display names and tag keys/values.
+- Test support: `TelemetryTestListener.ListenTo(string sourceName)` captures activities and exposes
+  a deterministic `SerializedActivities` string built from display names and tag keys/values.
 
 - [ ] **Step 1: Add OpenTelemetry packages**
 
@@ -1213,12 +1283,13 @@ public async Task Outbound_span_does_not_contain_authorization_or_query_secrets(
 ```
 
 Add a structured-log capture test with marker credentials and webhook body, then assert the captured
-rendered messages and properties contain none of them. Add a request test asserting a trace ID appears
-in safe application log scope and Problem Details correlation.
+rendered messages and properties contain none of them. Add a request test asserting a trace ID
+appears in safe application log scope and Problem Details correlation.
 
 - [ ] **Step 3: Run telemetry tests and verify failure**
 
-Run: `dotnet test ApiIntegrationLab.sln --filter "OpenTelemetrySafetyTests|TelemetryCorrelationTests"`
+Run:
+`dotnet test ApiIntegrationLab.sln --filter "OpenTelemetrySafetyTests|TelemetryCorrelationTests"`
 
 Expected: FAIL until OpenTelemetry registration and safe enrichment exist.
 
@@ -1242,10 +1313,10 @@ services.AddOpenTelemetry()
 ```
 
 Register logging with `AddOpenTelemetry`, formatted messages, scopes, parsed state values, and OTLP.
-Use standard instrumentation attributes only; do not enrich with authorization headers, query strings,
-user claims, bodies, signatures, GitHub logins, or Graph identities. Add a comment at the configuration
-boundary explaining that identifiers belong in provider responses and trace-correlated logs only when
-explicitly safe—not metric dimensions.
+Use standard instrumentation attributes only; do not enrich with authorization headers, query
+strings, user claims, bodies, signatures, GitHub logins, or Graph identities. Add a comment at the
+configuration boundary explaining that identifiers belong in provider responses and trace-correlated
+logs only when explicitly safe—not metric dimensions.
 
 - [ ] **Step 5: Verify telemetry safety and cardinality**
 
@@ -1255,13 +1326,15 @@ Expected: PASS, with the four documented custom metric instruments and only boun
 
 - [ ] **Step 6: Review checkpoint**
 
-Run: `git diff --check && rg -n "AddTag|SetTag|Record\(|Log(Information|Warning|Error)" src/ApiIntegrationLab.Api`
+Run:
+`git diff --check && rg -n "AddTag|SetTag|Record\(|Log(Information|Warning|Error)" src/ApiIntegrationLab.Api`
 
 Manually inspect every tag/log property against the approved schema. Do not commit.
 
 ### Task 11: Add collector configuration and the reproducible Docker Compose stack
 
 **Files:**
+
 - Create: `Dockerfile`
 - Create: `.dockerignore`
 - Create: `docker-compose.yml`
@@ -1270,6 +1343,7 @@ Manually inspect every tag/log property against the approved schema. Do not comm
 - Modify: `.gitignore`
 
 **Interfaces:**
+
 - Produces: API on `localhost:8080`, Swagger on `/swagger`, and Grafana on `localhost:3000`.
 - Produces: application OTLP → standalone Collector → Grafana LGTM flow.
 - Uses: `otel/opentelemetry-collector-contrib:0.160.0` and `grafana/otel-lgtm:0.33.0`.
@@ -1342,9 +1416,10 @@ Expected: exit 0 with a valid configuration message.
 - [ ] **Step 3: Create the multi-stage API image**
 
 Use `mcr.microsoft.com/dotnet/sdk:8.0` to restore/publish the API and
-`mcr.microsoft.com/dotnet/aspnet:8.0` for runtime. Copy project files before source files for restore
-cache efficiency, create a non-root runtime user, expose 8080, and install only the minimal health
-probe dependency if the base image lacks one. Comments explain layer order and non-root ownership.
+`mcr.microsoft.com/dotnet/aspnet:8.0` for runtime. Copy project files before source files for
+restore cache efficiency, create a non-root runtime user, expose 8080, and install only the minimal
+health probe dependency if the base image lacks one. Comments explain layer order and non-root
+ownership.
 
 - [ ] **Step 4: Create Compose and secret template**
 
@@ -1382,9 +1457,9 @@ services:
     ports: ["3000:3000"]
 ```
 
-Add health checks supported by the selected images and a named local data volume only if LGTM requires
-one. `.env.example` contains empty values plus comments for origin, permission, and sensitivity of
-each variable. `.env` remains ignored.
+Add health checks supported by the selected images and a named local data volume only if LGTM
+requires one. `.env.example` contains empty values plus comments for origin, permission, and
+sensitivity of each variable. `.env` remains ignored.
 
 - [ ] **Step 5: Validate image and Compose rendering**
 
@@ -1406,13 +1481,16 @@ Confirm no `latest` tags, host secret files, or writable source mounts exist. Do
 ### Task 12: Add a secret-safe live smoke harness
 
 **Files:**
+
 - Create: `scripts/smoke-test.sh`
 - Create: `tests/manual/README.md`
 - Modify: `.gitignore`
 
 **Interfaces:**
+
 - Consumes: running Compose stack and optional environment credentials.
-- Produces: nonzero exit on failed mandatory checks and explicit `SKIP` for unconfigured credential flows.
+- Produces: nonzero exit on failed mandatory checks and explicit `SKIP` for unconfigured credential
+  flows.
 
 - [ ] **Step 1: Write the smoke-test contract as shell assertions**
 
@@ -1436,10 +1514,10 @@ PASS Grafana health
 
 - [ ] **Step 2: Implement HMAC generation without logging the secret**
 
-Use current Unix seconds, a fixed JSON body, and `openssl dgst -sha256 -hmac "$WEBHOOK_SECRET"`; strip
-the command prefix from output and send `sha256=<digest>`. If no webhook secret is exported, use a
-process-local demo value only when the running API was started with that same explicit value; otherwise
-report `SKIP` rather than inventing mismatched configuration.
+Use current Unix seconds, a fixed JSON body, and `openssl dgst -sha256 -hmac "$WEBHOOK_SECRET"`;
+strip the command prefix from output and send `sha256=<digest>`. If no webhook secret is exported,
+use a process-local demo value only when the running API was started with that same explicit value;
+otherwise report `SKIP` rather than inventing mismatched configuration.
 
 - [ ] **Step 3: Run shell static and syntax checks**
 
@@ -1456,7 +1534,8 @@ Expected: no syntax errors; ShellCheck clean when installed.
 
 `tests/manual/README.md` gives the exact Entra redirect URI, delegated/application permissions,
 admin-consent requirement, login → callback → `/me` sequence, app-only `/users` check, aggregate
-check, and the Grafana Explore queries for service name and trace ID. It contains no credential value.
+check, and the Grafana Explore queries for service name and trace ID. It contains no credential
+value.
 
 - [ ] **Step 5: Review checkpoint**
 
@@ -1467,14 +1546,16 @@ Expected: no secret-printing patterns. Do not commit.
 ### Task 13: Write the showcase README and perform full verification
 
 **Files:**
+
 - Modify: `README.md`
 - Optionally create from real local output: `docs/images/swagger-api-catalog.png`
 - Optionally create from real local output: `docs/images/grafana-trace.png`
 
 **Interfaces:**
+
 - Produces: clone → configure → Compose → Swagger/Grafana walkthrough for a manager.
-- Produces: architecture, authentication matrix, endpoint catalogue, security model, telemetry schema,
-  live-demo script, troubleshooting, and representative validated trace output.
+- Produces: architecture, authentication matrix, endpoint catalogue, security model, telemetry
+  schema, live-demo script, troubleshooting, and representative validated trace output.
 
 - [ ] **Step 1: Write README structure from verified behavior**
 
@@ -1501,9 +1582,10 @@ Troubleshooting
 ```
 
 Use a Mermaid architecture diagram with the required pastel-on-dark initialization directive and
-colored `classDef` nodes. Include HTTP request/response examples with redacted tokens. Capture actual
-Swagger/Grafana screenshots only if the rendered stack exposes no personal or tenant data; otherwise
-include a sanitized trace tree and exact Grafana query instead of manufacturing screenshots.
+colored `classDef` nodes. Include HTTP request/response examples with redacted tokens. Capture
+actual Swagger/Grafana screenshots only if the rendered stack exposes no personal or tenant data;
+otherwise include a sanitized trace tree and exact Grafana query instead of manufacturing
+screenshots.
 
 - [ ] **Step 2: Run fast local verification**
 
@@ -1533,7 +1615,8 @@ docker compose ps
 ```
 
 Wait only for bounded health-check deadlines, then run `scripts/smoke-test.sh`. Inspect API and
-collector logs for secret marker values and errors. Generate public/API traffic and confirm in Grafana:
+collector logs for secret marker values and errors. Generate public/API traffic and confirm in
+Grafana:
 
 - trace service `api-integration-lab` contains inbound and outbound spans;
 - logs correlate on trace ID;
@@ -1563,4 +1646,5 @@ rg -n "T[B]D|T[O]DO|implement l[a]ter|fill in d[e]tails" README.md src tests scr
 ```
 
 Walk every acceptance criterion in the design spec and point to its implementation and evidence.
-Preserve the user's untracked `req.md`. Do not commit or push.
+The original project brief is retained in Git history and intentionally absent from the working
+tree. Do not commit or push.

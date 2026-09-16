@@ -1,0 +1,41 @@
+services:
+  api:
+    image: api-integration-lab:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      # The SDK sends all signals to the standalone collector, keeping backend details out of the app.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      GitHub__Token: ${GITHUB_TOKEN:-}
+      AzureAd__TenantId: ${MS_TENANT_ID:-}
+      AzureAd__ClientId: ${MS_CLIENT_ID:-}
+      AzureAd__ClientSecret: ${MS_CLIENT_SECRET:-}
+      BasicAuth__Username: ${BASIC_AUTH_USERNAME:-}
+      BasicAuth__Password: ${BASIC_AUTH_PASSWORD:-}
+      Webhook__Secret: ${WEBHOOK_SECRET:-}
+    depends_on:
+      otel-collector:
+        condition: service_started
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.160.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      # Read-only config prevents a compromised collector from modifying the checked-in pipeline.
+      - ./otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    depends_on:
+      lgtm:
+        condition: service_started
+    restart: unless-stopped
+
+  lgtm:
+    image: grafana/otel-lgtm:0.33.0
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

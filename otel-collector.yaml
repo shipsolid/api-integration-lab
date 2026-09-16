@@ -1,0 +1,50 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Bound memory before batching so a disconnected local backend cannot grow the collector forever.
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  # Stamp all three signals in one place so local telemetry is easy to isolate in Grafana Explore.
+  resource:
+    attributes:
+      - key: deployment.environment.name
+        value: local
+        action: upsert
+  # Fewer, larger exports reduce protocol overhead while keeping this interactive lab responsive.
+  batch:
+    timeout: 2s
+
+exporters:
+  otlp/lgtm:
+    endpoint: lgtm:4317
+    tls:
+      # Traffic stays inside the local Compose network; LGTM exposes plaintext OTLP for demos.
+      insecure: true
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/lgtm]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/lgtm]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [otlp/lgtm]

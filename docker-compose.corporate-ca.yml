@@ -1,0 +1,9 @@
+services:
+  api:
+    environment:
+      # .NET/OpenSSL reads this mounted host trust bundle for intercepted outbound provider TLS.
+      SSL_CERT_FILE: /etc/ssl/certs/host-ca-bundle.crt
+    volumes:
+      # A trust bundle contains public certificates, not private keys. Keep it read-only and outside
+      # the image so corporate trust is opt-in and cannot leak into a published image layer.
+      - ${CA_BUNDLE_PATH:-/etc/ssl/certs/ca-certificates.crt}:/etc/ssl/certs/host-ca-bundle.crt:ro

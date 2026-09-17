@@ -214,7 +214,9 @@ ports. Do not force-reset a working tree as a rollback mechanism.
 ## Local Data Recovery
 
 There is no supported application-data recovery because the API stores no durable business data.
-Microsoft token/session state and webhook replay state exist in memory and are lost on API restart.
+The Microsoft token cache and webhook replay state are lost on every API process restart. A browser
+cookie may survive when the same container retains its local data-protection keys, but the lost token
+cache can still require a new sign-in; recreating the container may invalidate the cookie as well.
 LGTM has no repository-declared persistent volume; telemetry removed with its container is not
 recoverable through this project. Reproduce the request to generate new local evidence.
 

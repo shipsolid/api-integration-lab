@@ -191,7 +191,8 @@ Before accepting a documentation or code change:
 
 - Localhost HTTP for API/Grafana; no ingress TLS.
 - In-memory Microsoft token cache and webhook replay cache.
-- Ephemeral local data-protection keys/session behavior across restart/recreation.
+- Container-local data-protection keys; recreating the API can invalidate cookies, and every process
+  restart loses the in-memory token cache.
 - No shared replay defense, durable idempotency store, business datastore, or event queue.
 - No secret manager, automated rotation, RBAC/ABAC, inbound rate limiter, WAF, or network policy.
 - Plaintext unauthenticated OTLP within the Compose network.

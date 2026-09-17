@@ -242,8 +242,9 @@ Use themed Mermaid diagrams for:
 6. concurrent `/api/demo` aggregation with partial-success and all-failed branches;
 7. OTLP export from API through Collector to LGTM.
 
-State that the service is stateless except for in-memory Microsoft token/session state and the
-in-memory accepted-MAC replay cache. Describe why those choices limit the lab to one API replica.
+State that the service is stateless except for the in-memory Microsoft token cache, local cookie
+data-protection keys, and in-memory accepted-MAC replay cache. Describe why those choices limit the
+lab to one API replica.
 
 - [ ] **Step 2: Write ADR 001 for the service boundary**
 

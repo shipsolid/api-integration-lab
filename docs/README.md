@@ -42,6 +42,7 @@ and how to operate or extend it safely.
 | Requirements | [Non-functional requirements](standards/non-functional-requirements.md) | Implemented safety bounds and undefined production targets |
 | Dependencies | [Dependency inventory](../DEPENDENCIES.md) | SDK, packages, images, tools, and provider dependencies |
 | Troubleshooting | [FAQ](../FAQ.md) | Short answers with links to canonical guidance |
+| Legal | [MIT License](../LICENSE) | Terms for using, copying, and modifying the repository |
 
 Durable decisions:
 

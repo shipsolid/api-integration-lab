@@ -52,9 +52,9 @@ Contract details at a glance:
 | `/health` | `{ status }` | Process-level `5xx` only | None |
 | `/api/public/posts` | `PublicPost[]` | `400`, `429`, `502`, `504` | Internet/provider availability |
 | `/api/basic/profile` | `BasicAuthProfile` | `401`, `403`, `429`, `502`, `503`, `504` | Both Basic values |
-| `/api/github/profile` | `GitHubProfile` | `401`, `403`, `429`, `502`, `504` | PAT for success |
-| `/api/github/repos` | `GitHubRepositoryPage` | `400`, `401`, `403`, `429`, `502`, `504` | PAT for success |
-| `/api/github/rate-limit` | `GitHubRateLimit` | `401`, `403`, `429`, `502`, `504` | PAT for success |
+| `/api/github/profile` | `GitHubProfile` | `401`, `403`, `429`, `502`, `503`, `504` | PAT for success; HTTPS base URL |
+| `/api/github/repos` | `GitHubRepositoryPage` | `400`, `401`, `403`, `429`, `502`, `503`, `504` | PAT for success; HTTPS base URL |
+| `/api/github/rate-limit` | `GitHubRateLimit` | `401`, `403`, `429`, `502`, `503`, `504` | PAT for success; HTTPS base URL |
 | `/api/microsoft/login` | Browser redirect | `302` or `503` | Complete Entra settings |
 | `/api/microsoft/logout` | Browser redirect | `302` or `401` | Authenticated cookie/Entra settings |
 | `/api/microsoft/me` | `GraphUser` | `401`, `403`, `429`, `502`, `503`, `504` | Cookie, delegated consent, Entra settings |

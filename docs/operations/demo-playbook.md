@@ -129,7 +129,7 @@ Do not deliberately exhaust provider limits or expose/revoke a real credential d
 | Why two OAuth flows? | They represent different principals: person vs workload | [Authentication](../authentication.md) |
 | Why not return the access token? | It expands browser/log/Swagger exposure and is unnecessary | [Security](../../SECURITY.md) |
 | What stops retry storms? | Two retries with jitter inside a 15-second total budget and standard circuit/limiter | [Resilience](../resilience-patterns.md) |
-| Can it scale horizontally? | Not unchanged; cookie keys/token cache/replay state are local memory | [Architecture](../../ARCHITECTURE.md#scaling-model) |
+| Can it scale horizontally? | Not unchanged; data-protection keys are container-local and token/replay caches are process-local | [Architecture](../../ARCHITECTURE.md#scaling-model) |
 | Is telemetry durable? | No; local LGTM retention/storage is not guaranteed | [Observability](../observability.md#retention-and-sampling) |
 
 ## Cleanup

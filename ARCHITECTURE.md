@@ -337,7 +337,7 @@ See [resilience patterns](docs/resilience-patterns.md) for exact failure budgets
 | Malformed provider JSON | Operation fails safely | Validate DTO and return owned upstream error |
 | Malicious GitHub next link | Risk of bearer-token disclosure | Reject any pagination URI that changes host |
 | Webhook replay | Duplicate event acceptance | Freshness window plus atomic accepted-MAC cache |
-| API restart | Delegated session/token and replay memory lost | Sign in again; do not treat local memory as durable state |
+| API process restart | In-memory delegated token cache and replay memory lost | Sign in again; a surviving cookie alone cannot restore the token cache |
 | Collector/LGTM unavailable | Telemetry temporarily absent | Bounded SDK/Collector processing; application request path remains independent |
 | Every demo provider fails | No useful aggregate | Return 502; otherwise preserve partial success as 200 |
 

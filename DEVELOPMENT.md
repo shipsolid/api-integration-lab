@@ -36,8 +36,7 @@ Expected output starts with `8.0.131`. A later .NET 8 feature band may be select
 ## First-Time Setup
 
 ```bash
-git clone <repository-url>
-cd api-integration-lab
+# Run from the repository root.
 cp .env.example .env
 dotnet restore ApiIntegrationLab.sln
 dotnet build ApiIntegrationLab.sln --configuration Release --no-restore
